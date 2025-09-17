@@ -1,11 +1,11 @@
-import maplibregl from "../../_npm/maplibre-gl@5.7.1/8b2c296a.js";
+import maplibregl from "../../_npm/maplibre-gl@5.7.2/a8afb983.js";
 
 export const crearMapa = (selector) => {
   const container = document.querySelector(selector);
   const map = new maplibregl.Map({
     container: container,
-    center: [-65.482, -17.237],
-    zoom: 5,
+    center: [-65., -16.5],
+    zoom: 5.2,
     scrollZoom: true,
     attributionControl: {
       compact: true,

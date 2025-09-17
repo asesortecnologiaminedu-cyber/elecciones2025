@@ -21,6 +21,7 @@
   flex-direction: column;
   gap: 3px;
   box-shadow: 0 4px 12px rgba(136, 160, 195, 0.1);
+  backdrop-filter: blur(2px);
 
   .title {
     font-size: 1.7rem;
@@ -106,7 +107,7 @@
   .maplibregl-popup-content {
     background: var(--fondo);
     box-shadow: 0 4px 12px rgba(136, 160, 195, 0.4);
-    /* backdrop-filter: blur(2px); */
+    backdrop-filter: blur(2px);
   }
 }
 
@@ -124,10 +125,19 @@
   color: var(--texto_fuerte);
 }
 
+.maplibregl-ctrl-group:not(:empty) {
+  box-shadow: none;
+}
+
+.maplibregl-ctrl {
+  filter: invert(var(--invert));
+}
+
 @media (max-width: 640px) {
   .header {
     margin: 10px 50px 10px 10px;
     padding: 10px 20px;
+    max-width: none;
 
     .title {
       font-size: 1.3rem;
@@ -135,7 +145,7 @@
 
     .subtitle,
     label {
-      font-size: 0.8rem;
+      font-size: 0.76rem;
     }
 
     .subtitle {
