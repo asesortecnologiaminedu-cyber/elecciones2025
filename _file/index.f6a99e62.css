@@ -1,0 +1,157 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+
+#observablehq-main,
+#observablehq-center {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.header {
+  color: var(--texto_fuerte);
+  background: var(--fondo);
+  font-family: "Inter", sans-serif;
+  position: relative;
+  top: 0;
+  max-width: 350px;
+  z-index: 2;
+  margin: 20px;
+  padding: 20px;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  box-shadow: 0 4px 12px rgba(136, 160, 195, 0.1);
+
+  .title {
+    font-size: 1.7rem;
+  }
+
+  .subtitle,
+  label,
+  .descripcion {
+    font-size: 0.9rem;
+  }
+
+  .timestamp,
+  .progreso,
+  .fuente {
+    font-size: 0.7rem;
+  }
+
+  .title {
+    line-height: 1.5;
+    font-weight: 700;
+  }
+
+  .subtitle {
+    font-weight: 500;
+    margin-bottom: 10px;
+  }
+
+  .timestamp,
+  .progreso {
+    opacity: 0.8;
+  }
+
+  .cambio_input {
+    form {
+      min-height: 0;
+      margin: 10px 0;
+    }
+    input {
+      display: none;
+    }
+    label {
+      color: var(--texto_suave);
+      padding: 3px 0;
+      border-bottom: 2px solid var(--fondo);
+      cursor: pointer;
+    }
+    label:hover {
+      border-color: var(--border);
+    }
+    label:has(input[type="radio"]:checked) {
+      color: var(--texto_fuerte);
+      border-bottom: 2px solid var(--texto_suave);
+    }
+  }
+
+  .descripcion {
+    opacity: 0.8;
+  }
+
+  .resultado_global {
+    margin: 20px;
+  }
+
+  .fuente {
+    margin-top: 10px;
+    opacity: 0.5;
+  }
+}
+
+.header:hover {
+  box-shadow: 0 4px 12px rgba(136, 160, 195, 0.2);
+}
+
+#mapa {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+}
+.maplibregl-popup {
+  z-index: 3;
+  max-width: 400px;
+  .maplibregl-popup-content {
+    background: var(--fondo);
+    box-shadow: 0 4px 12px rgba(136, 160, 195, 0.4);
+    /* backdrop-filter: blur(2px); */
+  }
+}
+
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
+  border-top-color: var(--fondo) !important;
+}
+
+.popup_header {
+  font-family: "Inter";
+  text-align: center;
+  opacity: 0.7;
+  font-size: 0.9em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  color: var(--texto_fuerte);
+}
+
+@media (max-width: 640px) {
+  .header {
+    margin: 10px 50px 10px 10px;
+    padding: 10px 20px;
+
+    .title {
+      font-size: 1.3rem;
+    }
+
+    .subtitle,
+    label {
+      font-size: 0.8rem;
+    }
+
+    .subtitle {
+      margin: 0;
+    }
+
+    .timestamp,
+    .progreso,
+    .descripcion,
+    .fuente,
+    .resultado_global {
+      display: none;
+    }
+
+    .cambio_input form {
+      margin: 5px 0;
+    }
+  }
+}
