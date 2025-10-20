@@ -39,6 +39,10 @@
     font-size: 0.7rem;
   }
 
+  .progreso {
+    margin-bottom: 10px;
+  }
+
   .title {
     line-height: 1.5;
     font-weight: 700;
@@ -46,7 +50,34 @@
 
   .subtitle {
     font-weight: 500;
+    margin-bottom: 5px;
+  }
+
+  .vuelta {
     margin-bottom: 10px;
+    label {
+      margin-right: 10px;
+      color: var(--texto_suave);
+      padding: 3px 0;
+      border-bottom: 2px solid var(--fondo);
+      cursor: pointer;
+
+      input[type="radio"] {
+        font-optical-sizing: auto;
+        font-style: normal;
+        margin: 0;
+        appearance: none;
+      }
+    }
+
+    label:has(input[type="radio"]:checked) {
+      color: var(--texto_fuerte);
+      border-bottom: 2px solid var(--texto_suave);
+    }
+
+    label:has(input[type="radio"]:not(:checked)) {
+      cursor: pointer;
+    }
   }
 
   .timestamp,
@@ -55,6 +86,7 @@
   }
 
   .cambio_input {
+    margin-bottom: 10px;
     form {
       min-height: 0;
       margin: 10px 0;
@@ -148,7 +180,10 @@
       font-size: 0.76rem;
     }
 
-    .subtitle {
+    .subtitle,
+    .vuelta,
+    .vuelta form,
+    .cambio_input {
       margin: 0;
     }
 

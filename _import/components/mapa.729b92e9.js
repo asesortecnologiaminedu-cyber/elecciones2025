@@ -1,4 +1,4 @@
-import maplibregl from "../../_npm/maplibre-gl@5.7.2/a8afb983.js";
+import maplibregl from "../../_npm/maplibre-gl@5.9.0/25aeab92.js";
 
 export const crearMapa = (selector) => {
   const container = document.querySelector(selector);
