@@ -16,7 +16,7 @@
 <link rel="modulepreload" href="./_observablehq/runtime.e080113b.js">
 <link rel="modulepreload" href="./_observablehq/stdlib.73a8ec5a.js">
 <link rel="modulepreload" href="./_npm/maplibre-gl@5.9.0/25aeab92.js">
-<link rel="modulepreload" href="./_import/components/definiciones.362a6096.js">
+<link rel="modulepreload" href="./_import/components/definiciones.f537d4cf.js">
 <link rel="modulepreload" href="./_import/components/capas.e2afdc89.js">
 <link rel="modulepreload" href="./_import/components/mapa.729b92e9.js">
 <link rel="modulepreload" href="./_import/components/helpers.ae8a66cd.js">
@@ -66,14 +66,14 @@
 import {define} from "./_observablehq/client.5d071151.js";
 import {registerFile} from "./_observablehq/stdlib.73a8ec5a.js";
 
-registerFile("./imagenes/ap.webp", {"name":"./imagenes/ap.webp","mimeType":"image/webp","path":"./_file/imagenes/ap.8f26d418.webp","lastModified":1760921012823,"size":18424});
-registerFile("./imagenes/apb-sumate.webp", {"name":"./imagenes/apb-sumate.webp","mimeType":"image/webp","path":"./_file/imagenes/apb-sumate.6be31528.webp","lastModified":1760921012824,"size":48160});
-registerFile("./imagenes/fp.webp", {"name":"./imagenes/fp.webp","mimeType":"image/webp","path":"./_file/imagenes/fp.7f1aa632.webp","lastModified":1760921012824,"size":10220});
-registerFile("./imagenes/libre.webp", {"name":"./imagenes/libre.webp","mimeType":"image/webp","path":"./_file/imagenes/libre.f3b956c2.webp","lastModified":1760921012824,"size":14496});
-registerFile("./imagenes/lyp-adn.webp", {"name":"./imagenes/lyp-adn.webp","mimeType":"image/webp","path":"./_file/imagenes/lyp-adn.19b6d52b.webp","lastModified":1760921012824,"size":295964});
-registerFile("./imagenes/mas-ipsp.webp", {"name":"./imagenes/mas-ipsp.webp","mimeType":"image/webp","path":"./_file/imagenes/mas-ipsp.337a492c.webp","lastModified":1760921012824,"size":38746});
-registerFile("./imagenes/pdc.webp", {"name":"./imagenes/pdc.webp","mimeType":"image/webp","path":"./_file/imagenes/pdc.ffe97178.webp","lastModified":1760921012824,"size":47182});
-registerFile("./imagenes/unidad.webp", {"name":"./imagenes/unidad.webp","mimeType":"image/webp","path":"./_file/imagenes/unidad.2fd99556.webp","lastModified":1760921012824,"size":44812});
+registerFile("./imagenes/ap.webp", {"name":"./imagenes/ap.webp","mimeType":"image/webp","path":"./_file/imagenes/ap.8f26d418.webp","lastModified":1760921634117,"size":18424});
+registerFile("./imagenes/apb-sumate.webp", {"name":"./imagenes/apb-sumate.webp","mimeType":"image/webp","path":"./_file/imagenes/apb-sumate.6be31528.webp","lastModified":1760921634117,"size":48160});
+registerFile("./imagenes/fp.webp", {"name":"./imagenes/fp.webp","mimeType":"image/webp","path":"./_file/imagenes/fp.7f1aa632.webp","lastModified":1760921634117,"size":10220});
+registerFile("./imagenes/libre.webp", {"name":"./imagenes/libre.webp","mimeType":"image/webp","path":"./_file/imagenes/libre.f3b956c2.webp","lastModified":1760921634117,"size":14496});
+registerFile("./imagenes/lyp-adn.webp", {"name":"./imagenes/lyp-adn.webp","mimeType":"image/webp","path":"./_file/imagenes/lyp-adn.19b6d52b.webp","lastModified":1760921634117,"size":295964});
+registerFile("./imagenes/mas-ipsp.webp", {"name":"./imagenes/mas-ipsp.webp","mimeType":"image/webp","path":"./_file/imagenes/mas-ipsp.337a492c.webp","lastModified":1760921634117,"size":38746});
+registerFile("./imagenes/pdc.webp", {"name":"./imagenes/pdc.webp","mimeType":"image/webp","path":"./_file/imagenes/pdc.ffe97178.webp","lastModified":1760921634117,"size":47182});
+registerFile("./imagenes/unidad.webp", {"name":"./imagenes/unidad.webp","mimeType":"image/webp","path":"./_file/imagenes/unidad.2fd99556.webp","lastModified":1760921634117,"size":44812});
 
 define({id: "5bbf212e", mode: "inline", inputs: ["v","display"], body: async (v,display) => {
 display(await(
@@ -102,6 +102,12 @@ formatos.porcentaje(progreso)
 define({id: "4ab7832d", mode: "inline", inputs: ["vistaInput","display"], body: async (vistaInput,display) => {
 display(await(
 vistaInput
+))
+}});
+
+define({id: "2d93545f", mode: "inline", inputs: ["v","display"], body: async (v,display) => {
+display(await(
+v.texto.descripcion
 ))
 }});
 
@@ -145,13 +151,13 @@ return {maplibregl};
 }});
 
 define({id: "1ba9cd28", outputs: ["partidos","formatos","capa_etiquetas","capa_recintos","crearMapa","actualizarCapas","colormap_categorias","colormap_lineal","ordenarResultado"], body: async () => {
-const [{partidos, formatos}, {capa_etiquetas, capa_recintos}, {crearMapa, actualizarCapas, colormap_categorias, colormap_lineal}, {ordenarResultado}] = await Promise.all([import("./_import/components/definiciones.362a6096.js"), import("./_import/components/capas.e2afdc89.js"), import("./_import/components/mapa.729b92e9.js"), import("./_import/components/helpers.ae8a66cd.js")]);
+const [{partidos, formatos}, {capa_etiquetas, capa_recintos}, {crearMapa, actualizarCapas, colormap_categorias, colormap_lineal}, {ordenarResultado}] = await Promise.all([import("./_import/components/definiciones.f537d4cf.js"), import("./_import/components/capas.e2afdc89.js"), import("./_import/components/mapa.729b92e9.js"), import("./_import/components/helpers.ae8a66cd.js")]);
 // Módulos locales
 
 return {partidos,formatos,capa_etiquetas,capa_recintos,crearMapa,actualizarCapas,colormap_categorias,colormap_lineal,ordenarResultado};
 }});
 
-define({id: "7ad9c9c3", outputs: ["vistas"], body: () => {
+define({id: "7f721344", outputs: ["vistas"], body: () => {
 // Definir vistas
 const vistas = {
   validos: {
@@ -165,7 +171,7 @@ const vistas = {
     texto: {
       subtitulo: "Votos para presidente",
       descripcion:
-        "Votos válidos para presidente en recintos electorales dentro del país, donde el color de cada punto corresponde a la organización política ganadora y el tamaño al número relativo de votos válidos.",
+        "Cada punto es un recinto cuyo color representa a la organización ganadora y cuyo tamaño al número de votos válidos"
     },
     mapa: {
       estilo:
@@ -190,7 +196,7 @@ const vistas = {
       subtitulo:
         "Participación electoral dentro del país en la primera vuelta de elecciones generales",
       descripcion:
-        "Porcentaje de votos nulos y blancos sobre el total de votos habilitados en recintos electorales dentro del país, donde el brillo de cada punto corresponde al porcentaje y el tamaño al número relativo de votos habilitados.",
+        "Cada punto es un recinto cuyo color representa al porcentaje de votos nulos + blancos sobre el total de habilitados y cuyo tamaño al número de votos habilitados"
     },
     mapa: {
       estilo:
@@ -552,7 +558,7 @@ return {plotResultado};
   <div class="timestamp">Actualizado el <observablehq-loading></observablehq-loading><!--:8a60e6f7:--></div>
   <div class="progreso">Contado al <observablehq-loading></observablehq-loading><!--:8e3d34a7:--></div>
   <div class="cambio_input"><observablehq-loading></observablehq-loading><!--:4ab7832d:--></div>
-  <!-- <div class="descripcion">${v.texto.descripcion}</div> -->
+  <div class="descripcion"><observablehq-loading></observablehq-loading><!--:2d93545f:--></div>
   <div class="resultado_global"><observablehq-loading></observablehq-loading><!--:3ddc2ce4:--></div>
   <div class="fuente">Fuentes: resultados del Sistema de Consolidación Oficial de Resultados de Cómputo y coordenadas del sistema GeoElectoral del Órgano Electoral Plurinacional.</div>
 </div>
@@ -562,7 +568,7 @@ return {plotResultado};
 <div class="observablehq observablehq--block"><!--:4aab9e99:--></div>
 <div class="observablehq observablehq--block"><!--:b6e21c59:--></div>
 <div class="observablehq observablehq--block"><!--:1ba9cd28:--></div>
-<div class="observablehq observablehq--block"><!--:7ad9c9c3:--></div>
+<div class="observablehq observablehq--block"><!--:7f721344:--></div>
 <div class="observablehq observablehq--block"><!--:5fc65b51:--></div>
 <div class="observablehq observablehq--block"><!--:22b6053d:--></div>
 <div class="observablehq observablehq--block"><!--:9263d38b:--></div>
