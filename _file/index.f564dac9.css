@@ -165,7 +165,7 @@
   filter: invert(var(--invert));
 }
 
-@media (max-width: 640px) {
+@media (max-width: 1100px) {
   .header {
     margin: 10px 50px 10px 10px;
     padding: 10px 20px;

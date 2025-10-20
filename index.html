@@ -16,7 +16,7 @@
 <link rel="modulepreload" href="./_observablehq/runtime.e080113b.js">
 <link rel="modulepreload" href="./_observablehq/stdlib.73a8ec5a.js">
 <link rel="modulepreload" href="./_npm/maplibre-gl@5.9.0/25aeab92.js">
-<link rel="modulepreload" href="./_import/components/definiciones.6fe71de6.js">
+<link rel="modulepreload" href="./_import/components/definiciones.c2c05265.js">
 <link rel="modulepreload" href="./_import/components/capas.e2afdc89.js">
 <link rel="modulepreload" href="./_import/components/mapa.729b92e9.js">
 <link rel="modulepreload" href="./_import/components/helpers.ae8a66cd.js">
@@ -66,14 +66,14 @@
 import {define} from "./_observablehq/client.5d071151.js";
 import {registerFile} from "./_observablehq/stdlib.73a8ec5a.js";
 
-registerFile("./imagenes/ap.webp", {"name":"./imagenes/ap.webp","mimeType":"image/webp","path":"./_file/imagenes/ap.8f26d418.webp","lastModified":1760928219807,"size":18424});
-registerFile("./imagenes/apb-sumate.webp", {"name":"./imagenes/apb-sumate.webp","mimeType":"image/webp","path":"./_file/imagenes/apb-sumate.6be31528.webp","lastModified":1760928219807,"size":48160});
-registerFile("./imagenes/fp.webp", {"name":"./imagenes/fp.webp","mimeType":"image/webp","path":"./_file/imagenes/fp.7f1aa632.webp","lastModified":1760928219807,"size":10220});
-registerFile("./imagenes/libre.webp", {"name":"./imagenes/libre.webp","mimeType":"image/webp","path":"./_file/imagenes/libre.f3b956c2.webp","lastModified":1760928219807,"size":14496});
-registerFile("./imagenes/lyp-adn.webp", {"name":"./imagenes/lyp-adn.webp","mimeType":"image/webp","path":"./_file/imagenes/lyp-adn.19b6d52b.webp","lastModified":1760928219808,"size":295964});
-registerFile("./imagenes/mas-ipsp.webp", {"name":"./imagenes/mas-ipsp.webp","mimeType":"image/webp","path":"./_file/imagenes/mas-ipsp.337a492c.webp","lastModified":1760928219808,"size":38746});
-registerFile("./imagenes/pdc.webp", {"name":"./imagenes/pdc.webp","mimeType":"image/webp","path":"./_file/imagenes/pdc.ffe97178.webp","lastModified":1760928219808,"size":47182});
-registerFile("./imagenes/unidad.webp", {"name":"./imagenes/unidad.webp","mimeType":"image/webp","path":"./_file/imagenes/unidad.2fd99556.webp","lastModified":1760928219808,"size":44812});
+registerFile("./imagenes/ap.webp", {"name":"./imagenes/ap.webp","mimeType":"image/webp","path":"./_file/imagenes/ap.8f26d418.webp","lastModified":1760995177374,"size":18424});
+registerFile("./imagenes/apb-sumate.webp", {"name":"./imagenes/apb-sumate.webp","mimeType":"image/webp","path":"./_file/imagenes/apb-sumate.6be31528.webp","lastModified":1760995177374,"size":48160});
+registerFile("./imagenes/fp.webp", {"name":"./imagenes/fp.webp","mimeType":"image/webp","path":"./_file/imagenes/fp.7f1aa632.webp","lastModified":1760995177374,"size":10220});
+registerFile("./imagenes/libre.webp", {"name":"./imagenes/libre.webp","mimeType":"image/webp","path":"./_file/imagenes/libre.f3b956c2.webp","lastModified":1760995177374,"size":14496});
+registerFile("./imagenes/lyp-adn.webp", {"name":"./imagenes/lyp-adn.webp","mimeType":"image/webp","path":"./_file/imagenes/lyp-adn.19b6d52b.webp","lastModified":1760995177375,"size":295964});
+registerFile("./imagenes/mas-ipsp.webp", {"name":"./imagenes/mas-ipsp.webp","mimeType":"image/webp","path":"./_file/imagenes/mas-ipsp.337a492c.webp","lastModified":1760995177375,"size":38746});
+registerFile("./imagenes/pdc.webp", {"name":"./imagenes/pdc.webp","mimeType":"image/webp","path":"./_file/imagenes/pdc.ffe97178.webp","lastModified":1760995177375,"size":47182});
+registerFile("./imagenes/unidad.webp", {"name":"./imagenes/unidad.webp","mimeType":"image/webp","path":"./_file/imagenes/unidad.2fd99556.webp","lastModified":1760995177376,"size":44812});
 
 define({id: "5bbf212e", mode: "inline", inputs: ["v","display"], body: async (v,display) => {
 display(await(
@@ -124,10 +124,6 @@ const resultado_global = plotResultado(resultados_globales[vista], {
 return {resultado_global};
 }});
 
-define({id: "01ba4719", body: () => {
-
-}});
-
 define({id: "4aab9e99", inputs: ["Inputs","Generators"], outputs: ["vueltas","vueltas_folder","vueltaInput","vuelta"], body: (Inputs,Generators) => {
 const vueltas = ["primera", "segunda"];
 const vueltas_folder = {
@@ -151,7 +147,7 @@ return {maplibregl};
 }});
 
 define({id: "1ba9cd28", outputs: ["partidos","formatos","capa_etiquetas","capa_recintos","crearMapa","actualizarCapas","colormap_categorias","colormap_lineal","ordenarResultado"], body: async () => {
-const [{partidos, formatos}, {capa_etiquetas, capa_recintos}, {crearMapa, actualizarCapas, colormap_categorias, colormap_lineal}, {ordenarResultado}] = await Promise.all([import("./_import/components/definiciones.6fe71de6.js"), import("./_import/components/capas.e2afdc89.js"), import("./_import/components/mapa.729b92e9.js"), import("./_import/components/helpers.ae8a66cd.js")]);
+const [{partidos, formatos}, {capa_etiquetas, capa_recintos}, {crearMapa, actualizarCapas, colormap_categorias, colormap_lineal}, {ordenarResultado}] = await Promise.all([import("./_import/components/definiciones.c2c05265.js"), import("./_import/components/capas.e2afdc89.js"), import("./_import/components/mapa.729b92e9.js"), import("./_import/components/helpers.ae8a66cd.js")]);
 // Módulos locales
 
 return {partidos,formatos,capa_etiquetas,capa_recintos,crearMapa,actualizarCapas,colormap_categorias,colormap_lineal,ordenarResultado};
@@ -550,7 +546,7 @@ return {plotResultado};
 <div id="observablehq-center">
 <main id="observablehq-main" class="observablehq">
 <link rel="stylesheet" type="text/css" href="https://unpkg.com/maplibre-gl@4.0.2/dist/maplibre-gl.css">
-<link rel="stylesheet" type="text/css" href="./_file/index.81b1125f.css">
+<link rel="stylesheet" type="text/css" href="./_file/index.f564dac9.css">
 <div class="header">
   <div class="title">Bolivia 2025</div>
   <div class="subtitle"><observablehq-loading></observablehq-loading><!--:5bbf212e:--></div>
@@ -564,7 +560,6 @@ return {plotResultado};
 </div>
 <div id="mapa"></div>
 <div class="observablehq observablehq--block"><!--:9d10e8c1:--></div>
-<div class="observablehq observablehq--block"><!--:01ba4719:--></div>
 <div class="observablehq observablehq--block"><!--:4aab9e99:--></div>
 <div class="observablehq observablehq--block"><!--:b6e21c59:--></div>
 <div class="observablehq observablehq--block"><!--:1ba9cd28:--></div>
