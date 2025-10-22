@@ -153,7 +153,7 @@ const [{partidos, formatos}, {capa_etiquetas, capa_recintos}, {crearMapa, actual
 return {partidos,formatos,capa_etiquetas,capa_recintos,crearMapa,actualizarCapas,colormap_categorias,colormap_lineal,ordenarResultado};
 }});
 
-define({id: "bc2a8c95", outputs: ["vistas"], body: () => {
+define({id: "303294bf", outputs: ["vistas"], body: () => {
 // Definir vistas
 const vistas = {
   validos: {
@@ -167,7 +167,7 @@ const vistas = {
     texto: {
       subtitulo: "Votos para presidente",
       descripcion:
-        "Cada punto es un recinto cuyo color representa a la organización ganadora y cuyo tamaño al número de votos válidos"
+        "Cada punto es un recinto cuyo color representa a la organización ganadora y cuyo tamaño al número de votos válidos",
     },
     mapa: {
       estilo:
@@ -189,10 +189,9 @@ const vistas = {
       invert: 1,
     },
     texto: {
-      subtitulo:
-        "Participación electoral",
+      subtitulo: "Participación electoral",
       descripcion:
-        "Cada punto es un recinto cuyo color representa al porcentaje de votos nulos + blancos sobre el total de habilitados y cuyo tamaño al número de votos habilitados"
+        "Cada punto es un recinto cuyo color representa al porcentaje de votos nulos + blancos sobre el total de habilitados y cuyo tamaño al número de votos habilitados",
     },
     mapa: {
       estilo:
@@ -230,35 +229,53 @@ const v = vistas[vista];
 return {v};
 }});
 
-define({id: "9263d38b", inputs: ["colormap_categorias","partidos","colormap_lineal"], outputs: ["recinto_colores"], body: (colormap_categorias,partidos,colormap_lineal) => {
+define({id: "71aada04", inputs: ["colormap_categorias","partidos","colormap_lineal"], outputs: ["recinto_colores"], body: (colormap_categorias,partidos,colormap_lineal) => {
 // Definir colores para puntos
 const recinto_colores = {
-  validos: colormap_categorias(
-    "partido",
-    Object.entries(partidos).map(([k, v]) => [k, v.colores[0]]),
-    {
-      fallback: "#ccc",
-    }
-  ),
-  participacion: colormap_lineal("invalido", [
-    [0, "#09151fff"],
-    [0.25, "#20554bff"],
-    [0.5, "#7dae61ff"],
-    [0.7, "#bcdf77ff"],
-    [0.9, "#f4ff90ff"],
-  ]),
+  primera: {
+    validos: colormap_categorias(
+      "partido",
+      Object.entries(partidos).map(([k, v]) => [k, v.colores[0]]),
+      {
+        fallback: "#ccc",
+      }
+    ),
+    participacion: colormap_lineal("invalido", [
+      [0, "#09151fff"],
+      [0.25, "#20554bff"],
+      [0.5, "#7dae61ff"],
+      [0.7, "#bcdf77ff"],
+      [0.9, "#f4ff90ff"],
+    ]),
+  },
+  segunda: {
+    validos: colormap_lineal("diferencia", [
+      [-.5, "#f50303"],
+      [-.25, "#ec9c9d"],
+      [0., "#f1f1f1"],
+      [.25, "#8cbcac"],
+      [.5, "#05636b"],
+    ]),
+    participacion: colormap_lineal("invalido", [
+      [0, "#09151fff"],
+      [0.25, "#20554bff"],
+      [0.5, "#7dae61ff"],
+      [0.7, "#bcdf77ff"],
+      [0.9, "#f4ff90ff"],
+    ]),
+  },
 };
 return {recinto_colores};
 }});
 
-define({id: "27a237d9", inputs: ["capa_etiquetas","v","capa_recintos","recintos","recinto_colores","vista"], outputs: ["capas"], body: (capa_etiquetas,v,capa_recintos,recintos,recinto_colores,vista) => {
+define({id: "eddf76c5", inputs: ["capa_etiquetas","v","capa_recintos","recintos","recinto_colores","vuelta","vista"], outputs: ["capas"], body: (capa_etiquetas,v,capa_recintos,recintos,recinto_colores,vuelta,vista) => {
 // Definir capas
 const capas = {
   etiquetas: capa_etiquetas(v.mapa.etiquetas),
   recintos: capa_recintos(
     recintos,
     v.mapa.radio,
-    recinto_colores[vista],
+    recinto_colores[vuelta][vista],
     "partido"
   ),
 };
@@ -306,12 +323,13 @@ const progreso = await fetch(`${gh}progreso`).then((r) => r.text());
 return {gh,recintos,resultados,timestamp,progreso};
 }});
 
-define({id: "c6bf83a3", inputs: ["recintos","resultados"], body: (recintos,resultados) => {
+define({id: "27b05165", inputs: ["recintos","resultados","vuelta"], body: (recintos,resultados,vuelta) => {
 // Hidratar coordenadas de recintos con datos de resultados
 for (const feature of recintos.features) {
   // Código de recinto
   const codigo = feature.properties.c;
   const resultado = resultados[codigo];
+
   // Total de votos válidos
   feature.properties.validos = resultado
     ? Object.values(resultado.r).reduce((s, v) => s + v, 0)
@@ -327,6 +345,12 @@ for (const feature of recintos.features) {
     ? (resultado.p.b + resultado.p.n) /
       (resultado.p.b + resultado.p.n + resultado.p.v)
     : null;
+  if (vuelta == "segunda") {
+    feature.properties.diferencia = resultado
+      ? resultado.r.PDC / feature.properties.total -
+        resultado.r.LIBRE / feature.properties.total
+      : 0;
+  }
 }
 }});
 
@@ -563,16 +587,16 @@ return {plotResultado};
 <div class="observablehq observablehq--block"><!--:4aab9e99:--></div>
 <div class="observablehq observablehq--block"><!--:b6e21c59:--></div>
 <div class="observablehq observablehq--block"><!--:1ba9cd28:--></div>
-<div class="observablehq observablehq--block"><!--:bc2a8c95:--></div>
+<div class="observablehq observablehq--block"><!--:303294bf:--></div>
 <div class="observablehq observablehq--block"><!--:5fc65b51:--></div>
 <div class="observablehq observablehq--block"><!--:22b6053d:--></div>
-<div class="observablehq observablehq--block"><!--:9263d38b:--></div>
-<div class="observablehq observablehq--block"><!--:27a237d9:--></div>
+<div class="observablehq observablehq--block"><!--:71aada04:--></div>
+<div class="observablehq observablehq--block"><!--:eddf76c5:--></div>
 <div class="observablehq observablehq--block"><!--:d414dfb4:--></div>
 <div class="observablehq observablehq--block"><!--:fe7e174d:--></div>
 <div class="observablehq observablehq--block"><!--:f8d99ee0:--></div>
 <div class="observablehq observablehq--block"><!--:f9bad84e:--></div>
-<div class="observablehq observablehq--block"><!--:c6bf83a3:--></div>
+<div class="observablehq observablehq--block"><!--:27b05165:--></div>
 <div class="observablehq observablehq--block"><!--:21627170:--></div>
 <div class="observablehq observablehq--block"><!--:bec499e8:--></div>
 <div class="observablehq observablehq--block"><!--:c274c6ca:--></div>
