@@ -21,21 +21,16 @@ sidebar: false
   <div class="title">Bolivia 2025</div>
   <div class="subtitle">${v.texto.subtitulo}</div>
   <div class="vuelta">${vueltaInput}</div>
-  <div class="timestamp">Actualizado el ${formatos.fecha.format(new Date(timestamp))}</div>
-  <div class="progreso">Contado al ${formatos.porcentaje(progreso)}</div>
+  <div class="timestamp">${timestamp ? `Actualizado el ${formatos.fecha.format(new Date(timestamp))}` : ""}</div>
+  <div class="progreso">${progreso ? `Contado al ${formatos.porcentaje(progreso)}` : ""}</div>
   <div class="cambio_input">${vistaInput}</div>
   <div class="descripcion">${v.texto.descripcion}</div>
-  <div class="resultado_global">${resultado_global}</div>
+  <div class="resultado_global">${resultado_global || ""}</div>
   <div class="fuente">Fuentes: resultados del Sistema de Consolidación Oficial de Resultados de Cómputo y coordenadas del sistema GeoElectoral del Órgano Electoral Plurinacional.</div>
 </div>
 
 <div id="mapa"></div>
 
-```js
-const resultado_global = plotResultado(resultados_globales[vista], {
-  fontSizeMultiplier: 0.8,
-});
-```
 
 ```js
 const vueltas = ["primera", "segunda"];
@@ -54,12 +49,13 @@ const vuelta = Generators.input(vueltaInput);
 ```js
 // Dependencias externas
 import maplibregl from "npm:maplibre-gl";
+import { FileAttachment } from "observablehq:stdlib";
 ```
 
 ```js
 // Módulos locales
 import { partidos, formatos } from "./components/definiciones.js";
-import { capa_etiquetas, capa_recintos } from "./components/capas.js";
+import { capa_etiquetas, capa_recintos, capa_escuelas } from "./components/capas.js";
 import {
   crearMapa,
   actualizarCapas,
@@ -163,18 +159,6 @@ const recinto_colores = {
 };
 ```
 
-```js
-// Definir capas
-const capas = {
-  etiquetas: capa_etiquetas(v.mapa.etiquetas),
-  recintos: capa_recintos(
-    recintos,
-    v.mapa.radio,
-    recinto_colores[vista],
-    "partido"
-  ),
-};
-```
 
 ```js
 // Crear mapa
@@ -186,14 +170,6 @@ const popup = new maplibregl.Popup({
 });
 ```
 
-```js
-// Aplicar capas
-await actualizarCapas(map, v.mapa.estilo, capas, {
-  sources: ["recintos", "etiquetas"],
-  layers: ["recintos", "etiquetas"],
-  hover: { recintos_hover: "recintos" },
-});
-```
 
 ```js
 // Actualizar definiciones de estilo con la vista
@@ -206,12 +182,202 @@ actualizarCSS(v.colores);
 ```
 
 ```js
+// Inicializar variables (se actualizarán después de cargar los datos)
+let recintos = null;
+let resultados = null;
+let timestamp = null;
+let progreso = null;
+
 // Cargar datos
 const gh = `https://raw.githubusercontent.com/datosbolivia/elecciones2025/refs/heads/main/${vueltas_folder[vuelta]}`;
-const recintos = await d3.json(`${gh}recintos.geojson`);
-const resultados = await d3.json(`${gh}resultados.json`);
-const timestamp = await fetch(`${gh}timestamp`).then((r) => r.text());
-const progreso = await fetch(`${gh}progreso`).then((r) => r.text());
+recintos = await d3.json(`${gh}recintos.geojson`);
+resultados = await d3.json(`${gh}resultados.json`);
+timestamp = await fetch(`${gh}timestamp`).then((r) => r.text());
+progreso = await fetch(`${gh}progreso`).then((r) => r.text());
+
+// Cargar datos de unidades escolares (desde la carpeta base datos, no específica de vuelta)
+// Intentar cargar desde GitHub, si falla intentar desde archivo local
+let dataEscuelas = null;
+let fronteraEscuelas = null;
+
+try {
+  const ghBase = `https://raw.githubusercontent.com/datosbolivia/elecciones2025/refs/heads/main/resultados/datos/`;
+  dataEscuelas = await d3.json(`${ghBase}data.json`);
+} catch (e) {
+  // Si falla, intentar cargar desde archivo local
+  try {
+    dataEscuelas = await FileAttachment("datos/data.json").json();
+    console.log("✓ Cargado data.json desde archivo local");
+  } catch (e2) {
+    console.warn("No se pudo cargar data.json de unidades escolares:", e2);
+    dataEscuelas = null;
+  }
+}
+
+try {
+  const ghBase = `https://raw.githubusercontent.com/datosbolivia/elecciones2025/refs/heads/main/resultados/datos/`;
+  const text = await fetch(`${ghBase}unidades_educativas_frontera.json`).then((r) => r.text());
+  // Reemplazar NaN con null para hacer el JSON válido
+  // Usar múltiples pasadas para asegurar que todos los casos sean capturados
+  let cleanedText = text.replace(/:\s*NaN\s*,/g, ': null,');
+  cleanedText = cleanedText.replace(/:\s*NaN\s*\}/g, ': null}');
+  cleanedText = cleanedText.replace(/:\s*NaN\s*\]/g, ': null]');
+  fronteraEscuelas = JSON.parse(cleanedText);
+} catch (e) {
+  // Si falla, intentar cargar desde archivo local
+  try {
+    const text = await FileAttachment("datos/unidades_educativas_frontera.json").text();
+    // Reemplazar NaN con null para hacer el JSON válido
+    // Usar múltiples pasadas para asegurar que todos los casos sean capturados
+    let cleanedText = text.replace(/:\s*NaN\s*,/g, ': null,');
+    cleanedText = cleanedText.replace(/:\s*NaN\s*\}/g, ': null}');
+    cleanedText = cleanedText.replace(/:\s*NaN\s*\]/g, ': null]');
+    fronteraEscuelas = JSON.parse(cleanedText);
+    console.log("✓ Cargado unidades_educativas_frontera.json desde archivo local");
+  } catch (e2) {
+    console.warn("No se pudo cargar unidades_educativas_frontera.json:", e2);
+    fronteraEscuelas = null;
+  }
+}
+
+// Crear GeoJSON para unidades escolares (solo si los datos están disponibles)
+const escuelas = (() => {
+  if (!dataEscuelas && !fronteraEscuelas) return null;
+  
+  const escuelasLookup = new Map();
+  if (dataEscuelas && dataEscuelas.schools) {
+    for (const school of dataEscuelas.schools) {
+      escuelasLookup.set(school.cod_ue_id, school);
+    }
+  }
+
+  const escuelasFeatures = [];
+
+  // Agregar escuelas de data.json (azules)
+  if (dataEscuelas && dataEscuelas.schools) {
+    for (const school of dataEscuelas.schools) {
+      const lat = parseFloat(school.latitude || school.Latitud);
+      const lng = parseFloat(school.longitude || school.Longitud);
+      
+      // Validar coordenadas
+      if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        continue;
+      }
+      
+      escuelasFeatures.push({
+        type: "Feature",
+        geometry: {
+          type: "Point",
+          coordinates: [lng, lat],
+        },
+        properties: {
+          cod_ue_id: school.cod_ue_id,
+          name: school.name || school.desc_ue,
+          color: "blue",
+          data: school,
+        },
+      });
+    }
+  }
+
+  // Agregar escuelas de frontera que NO están en data.json (grises)
+  if (fronteraEscuelas && fronteraEscuelas.schools) {
+    for (const school of fronteraEscuelas.schools) {
+      // Saltar si ya está en data.json
+      if (escuelasLookup.has(school.cod_ue_id)) {
+        continue;
+      }
+      
+      const lat = parseFloat(school.latitude);
+      const lng = parseFloat(school.longitude);
+      
+      // Validar coordenadas
+      if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        continue;
+      }
+      
+      escuelasFeatures.push({
+        type: "Feature",
+        geometry: {
+          type: "Point",
+          coordinates: [lng, lat],
+        },
+        properties: {
+          cod_ue_id: school.cod_ue_id,
+          name: school.desc_ue,
+          color: "grey",
+          frontera_data: school,
+        },
+      });
+    }
+  }
+
+  const result = {
+    type: "FeatureCollection",
+    features: escuelasFeatures,
+  };
+  
+  console.log(`✓ GeoJSON de escuelas creado: ${escuelasFeatures.length} escuelas`);
+  if (dataEscuelas) {
+    console.log(`  - ${dataEscuelas.schools ? dataEscuelas.schools.length : 0} escuelas en data.json`);
+  }
+  if (fronteraEscuelas) {
+    console.log(`  - ${fronteraEscuelas.schools ? fronteraEscuelas.schools.length : 0} escuelas en frontera`);
+  }
+  
+  return result;
+})();
+
+// Resultados a nivel global
+function resultadoGlobal(resultados, key) {
+  return Object.values(resultados).reduce((acc, resultado) => {
+    for (const [opcion, votos] of Object.entries(resultado[key])) {
+      acc[opcion] = (acc[opcion] || 0) + votos;
+    }
+    return acc;
+  }, {});
+}
+const resultados_globales = {
+  validos: resultadoGlobal(resultados, "r"),
+  participacion: resultadoGlobal(resultados, "p"),
+};
+
+// Calcular resultado_global ahora que tenemos resultados_globales
+const resultado_global = plotResultado(resultados_globales[vista], {
+  fontSizeMultiplier: 0.8,
+});
+
+// Ahora que tenemos los datos, definir y aplicar las capas
+const capas = {
+  etiquetas: capa_etiquetas(v.mapa.etiquetas),
+  recintos: capa_recintos(
+    recintos,
+    v.mapa.radio,
+    recinto_colores[vista],
+    "partido"
+  ),
+};
+
+// Agregar capa de escuelas solo si hay datos disponibles
+if (escuelas && escuelas.features.length > 0) {
+  capas.escuelas = capa_escuelas(escuelas);
+}
+
+// Aplicar capas
+const capasConfig = {
+  sources: ["recintos", "etiquetas"],
+  layers: ["recintos", "etiquetas"],
+  hover: { recintos_hover: "recintos" },
+};
+
+// Agregar escuelas a la configuración solo si están disponibles
+if (escuelas && escuelas.features.length > 0) {
+  capasConfig.sources.push("escuelas");
+  capasConfig.layers.push("escuelas");
+  capasConfig.hover.escuelas_hover = "escuelas";
+}
+
+await actualizarCapas(map, v.mapa.estilo, capas, capasConfig);
 ```
 
 ```js
@@ -238,29 +404,16 @@ for (const feature of recintos.features) {
 }
 ```
 
-```js
-// Resultados a nivel global
-function resultadoGlobal(resultados, key) {
-  return Object.values(resultados).reduce((acc, resultado) => {
-    for (const [opcion, votos] of Object.entries(resultado[key])) {
-      acc[opcion] = (acc[opcion] || 0) + votos;
-    }
-    return acc;
-  }, {});
-}
-const resultados_globales = {
-  validos: resultadoGlobal(resultados, "r"),
-  participacion: resultadoGlobal(resultados, "p"),
-};
-```
 
 ```js
 // Popups
 let locked = false;
 const mouseenter = function (e) {
+  if (!resultados) return;
   map.getCanvas().style.cursor = "pointer";
   const feature = e.features[0];
   const resultado = resultados[feature.properties.c] ?? null;
+  if (!resultado) return;
   const grafico = plotResultado(resultado[v.datos.campo_resultado]);
   popup
     .setHTML(
@@ -288,6 +441,87 @@ map.on("click", (e) => {
     !map.queryRenderedFeatures(e.point, { layers: ["recintos_hover"] }).length
   ) {
     locked = false;
+    popup.remove();
+  }
+});
+
+// Popups para escuelas
+const popupEscuela = new maplibregl.Popup({
+  closeButton: false,
+  closeOnClick: false,
+});
+
+let lockedEscuela = false;
+
+const mouseenterEscuela = function (e) {
+  map.getCanvas().style.cursor = "pointer";
+  const feature = e.features[0];
+  const props = feature.properties;
+  const schoolData = props.data || props.frontera_data;
+  
+  if (!schoolData) return;
+  
+  let html = `<div class="popup_plot">`;
+  html += `<div class="popup_header">${props.name || schoolData.desc_ue || ""}</div>`;
+  html += `<div style="padding: 10px; font-family: Inter; font-size: 0.9em; color: var(--texto_fuerte);">`;
+  
+  if (props.data) {
+    // Mostrar información de data.json
+    html += `<div style="margin-bottom: 8px;"><strong>Código:</strong> ${schoolData.cod_ue_id || ""}</div>`;
+    html += `<div style="margin-bottom: 8px;"><strong>Departamento:</strong> ${schoolData.desc_departamento || ""}</div>`;
+    if (schoolData.distrito) {
+      html += `<div style="margin-bottom: 8px;"><strong>Distrito:</strong> ${schoolData.distrito}</div>`;
+    }
+    if (schoolData.area) {
+      html += `<div style="margin-bottom: 8px;"><strong>Área:</strong> ${schoolData.area}</div>`;
+    }
+    if (schoolData.estadoinstitucion) {
+      html += `<div style="margin-bottom: 8px;"><strong>Estado:</strong> ${schoolData.estadoinstitucion}</div>`;
+    }
+  } else if (props.frontera_data) {
+    // Mostrar información básica de frontera
+    html += `<div style="margin-bottom: 8px;"><strong>Código:</strong> ${schoolData.cod_ue_id || ""}</div>`;
+    if (schoolData.departamento) {
+      html += `<div style="margin-bottom: 8px;"><strong>Departamento:</strong> ${schoolData.departamento}</div>`;
+    }
+    if (schoolData.area) {
+      html += `<div style="margin-bottom: 8px;"><strong>Área:</strong> ${schoolData.area}</div>`;
+    }
+  }
+  
+  html += `</div></div>`;
+  
+  popupEscuela
+    .setHTML(html)
+    .setLngLat(feature.geometry.coordinates)
+    .addTo(map);
+};
+
+const mouseleaveEscuela = function () {
+  map.getCanvas().style.cursor = "";
+  if (!lockedEscuela) popupEscuela.remove();
+};
+
+// Registrar handlers para escuelas solo si la capa existe
+if (escuelas && escuelas.features && escuelas.features.length > 0) {
+  map.on("mouseenter", "escuelas_hover", mouseenterEscuela);
+  map.on("mouseleave", "escuelas_hover", mouseleaveEscuela);
+  map.on("click", "escuelas_hover", () => {
+    lockedEscuela = true;
+  });
+}
+
+map.on("click", (e) => {
+  const hoverLayers = ["recintos_hover"];
+  if (escuelas && escuelas.features && escuelas.features.length > 0) {
+    hoverLayers.push("escuelas_hover");
+  }
+  if (
+    !map.queryRenderedFeatures(e.point, { layers: hoverLayers }).length
+  ) {
+    lockedEscuela = false;
+    locked = false;
+    popupEscuela.remove();
     popup.remove();
   }
 });

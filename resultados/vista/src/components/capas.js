@@ -101,3 +101,62 @@ export const capa_recintos = (data, campo_radio, coloreado, campo_hover) => {
     },
   };
 };
+
+export const capa_escuelas = (data) => {
+  return {
+    source: {
+      type: "geojson",
+      data: data,
+    },
+    layer: {
+      id: "escuelas",
+      type: "circle",
+      source: "escuelas",
+      paint: {
+        "circle-radius": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          6,
+          3,
+          12,
+          5,
+          16,
+          8,
+        ],
+        "circle-color": [
+          "match",
+          ["get", "color"],
+          "blue",
+          "#3b82f6",
+          "grey",
+          "#9ca3af",
+          "#9ca3af",
+        ],
+        "circle-opacity": 0.7,
+        "circle-stroke-width": 1,
+        "circle-stroke-color": "#ffffff",
+        "circle-stroke-opacity": 0.8,
+      },
+    },
+    hover: {
+      id: "escuelas_hover",
+      type: "circle",
+      source: "escuelas",
+      paint: {
+        "circle-color": "rgba(0,0,0,0)",
+        "circle-radius": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          6,
+          4,
+          12,
+          7,
+          16,
+          11,
+        ],
+      },
+    },
+  };
+};
