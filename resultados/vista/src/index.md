@@ -242,7 +242,7 @@ try {
     const csvText = await csvFile.text();
     csvEscuelas = d3.csvParse(csvText);
     if (csvEscuelas && csvEscuelas.length > 0) {
-      console.log(`✓ Cargado CSV desde archivo local: ${csvEscuelas.length} escuelas`);
+      console.error(`✓ Cargado CSV desde archivo local: ${csvEscuelas.length} escuelas`);
     } else {
       throw new Error("CSV vacío o inválido");
     }
@@ -442,7 +442,23 @@ const mouseenter = function (e) {
   const feature = e.features[0];
   const resultado = resultados[feature.properties.c] ?? null;
   if (!resultado) return;
-  // Close escuela popup if it's open (recintos take priority)
+  
+  // Check if there's an escuela at this location - if so, don't show recinto popup
+  // Escuelas take priority when hovering directly over them
+  if (e.originalEvent) {
+    const rect = map.getCanvas().getBoundingClientRect();
+    const point = [
+      e.originalEvent.clientX - rect.left,
+      e.originalEvent.clientY - rect.top
+    ];
+    const escuelaFeatures = map.queryRenderedFeatures(point, { layers: ["escuelas_hover"] });
+    if (escuelaFeatures && escuelaFeatures.length > 0) {
+      // There's an escuela here, don't show recinto popup - let escuela popup show instead
+      return;
+    }
+  }
+  
+  // Close escuela popup if it's open (but only if we're not over an escuela)
   if (!lockedEscuela) popupEscuela.remove();
   const grafico = plotResultado(resultado[v.datos.campo_resultado]);
   popup
@@ -489,6 +505,11 @@ const mouseenterEscuela = function (e) {
   const csvData = csvEscuelasMap.get(cod_ue_id) || csvEscuelasMap.get(Number(cod_ue_id));
   const schoolData = csvData || props.data || props.frontera_data;
   
+  // Debug: log what we found
+  if (!csvData && cod_ue_id) {
+    console.log(`No CSV data found for cod_ue_id: ${cod_ue_id}, using fallback data`);
+  }
+  
   // Close recinto popup if it's open (but don't block escuela popup)
   if (!locked) popup.remove();
   
@@ -507,38 +528,34 @@ const mouseenterEscuela = function (e) {
     html += `<div style="margin-bottom: 8px;"><strong>Área:</strong> ${csvData.area || ""}</div>`;
     html += `<div style="margin-bottom: 8px;"><strong>Departamento:</strong> ${csvData.desc_departamento || ""}</div>`;
     html += `<div style="margin-bottom: 8px;"><strong>Estado:</strong> ${csvData.estadoinstitucion || ""}</div>`;
-    if (csvData.latitud) {
-      html += `<div style="margin-bottom: 8px;"><strong>Latitud:</strong> ${csvData.latitud}</div>`;
-    }
-    if (csvData.longitud) {
-      html += `<div style="margin-bottom: 8px;"><strong>Longitud:</strong> ${csvData.longitud}</div>`;
-    }
+    html += `<div style="margin-bottom: 8px;"><strong>Latitud:</strong> ${csvData.latitud || ""}</div>`;
+    html += `<div style="margin-bottom: 8px;"><strong>Longitud:</strong> ${csvData.longitud || ""}</div>`;
   } else if (schoolData) {
-    // Fallback: mostrar información disponible
-    if (schoolData.cod_ue_id) {
-      html += `<div style="margin-bottom: 8px;"><strong>Código:</strong> ${schoolData.cod_ue_id}</div>`;
+    // Fallback: mostrar toda la información disponible
+    html += `<div style="margin-bottom: 8px;"><strong>Código:</strong> ${schoolData.cod_ue_id || cod_ue_id || ""}</div>`;
+    html += `<div style="margin-bottom: 8px;"><strong>Nombre:</strong> ${schoolData.desc_ue || schoolData.name || props.name || ""}</div>`;
+    html += `<div style="margin-bottom: 8px;"><strong>Distrito:</strong> ${schoolData.distrito || ""}</div>`;
+    html += `<div style="margin-bottom: 8px;"><strong>Área:</strong> ${schoolData.area || ""}</div>`;
+    html += `<div style="margin-bottom: 8px;"><strong>Departamento:</strong> ${schoolData.desc_departamento || schoolData.departamento || ""}</div>`;
+    html += `<div style="margin-bottom: 8px;"><strong>Estado:</strong> ${schoolData.estadoinstitucion || ""}</div>`;
+    if (schoolData.latitude || schoolData.latitud || schoolData.Latitud) {
+      html += `<div style="margin-bottom: 8px;"><strong>Latitud:</strong> ${schoolData.latitude || schoolData.latitud || schoolData.Latitud || ""}</div>`;
     }
-    if (schoolData.desc_ue || schoolData.name) {
-      html += `<div style="margin-bottom: 8px;"><strong>Nombre:</strong> ${schoolData.desc_ue || schoolData.name}</div>`;
-    }
-    if (schoolData.desc_departamento || schoolData.departamento) {
-      html += `<div style="margin-bottom: 8px;"><strong>Departamento:</strong> ${schoolData.desc_departamento || schoolData.departamento}</div>`;
-    }
-    if (schoolData.distrito) {
-      html += `<div style="margin-bottom: 8px;"><strong>Distrito:</strong> ${schoolData.distrito}</div>`;
-    }
-    if (schoolData.area) {
-      html += `<div style="margin-bottom: 8px;"><strong>Área:</strong> ${schoolData.area}</div>`;
-    }
-    if (schoolData.estadoinstitucion) {
-      html += `<div style="margin-bottom: 8px;"><strong>Estado:</strong> ${schoolData.estadoinstitucion}</div>`;
+    if (schoolData.longitude || schoolData.longitud || schoolData.Longitud) {
+      html += `<div style="margin-bottom: 8px;"><strong>Longitud:</strong> ${schoolData.longitude || schoolData.longitud || schoolData.Longitud || ""}</div>`;
     }
   } else {
-    // Show at least the cod_ue_id if we have it
-    if (cod_ue_id) {
-      html += `<div style="margin-bottom: 8px;"><strong>Código:</strong> ${cod_ue_id}</div>`;
+    // Show at least the cod_ue_id and any available properties
+    html += `<div style="margin-bottom: 8px;"><strong>Código:</strong> ${cod_ue_id || "N/A"}</div>`;
+    if (props.name) {
+      html += `<div style="margin-bottom: 8px;"><strong>Nombre:</strong> ${props.name}</div>`;
     }
-    html += `<div style="margin-bottom: 8px;">Información no disponible</div>`;
+    // Show all available properties for debugging
+    const availableProps = Object.keys(props).filter(k => k !== 'cod_ue_id' && props[k]);
+    if (availableProps.length > 0) {
+      html += `<div style="margin-bottom: 8px; font-size: 0.85em; color: #666;"><em>Propiedades disponibles: ${availableProps.join(", ")}</em></div>`;
+    }
+    html += `<div style="margin-bottom: 8px; color: #999;">Información CSV no disponible</div>`;
   }
   
   html += `</div></div>`;
