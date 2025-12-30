@@ -19,31 +19,17 @@ sidebar: false
 
 <div class="header">
   <div class="title">Bolivia 2025</div>
-  <div class="subtitle">${v.texto.subtitulo}</div>
-  <div class="vuelta">${vueltaInput}</div>
-  <div class="timestamp">${timestamp ? `Actualizado el ${formatos.fecha.format(new Date(timestamp))}` : ""}</div>
-  <div class="progreso">${progreso ? `Contado al ${formatos.porcentaje(progreso)}` : ""}</div>
-  <div class="cambio_input">${vistaInput}</div>
-  <div class="descripcion">${v.texto.descripcion}</div>
-  <div class="resultado_global">${resultado_global || ""}</div>
-  <div class="fuente">Fuentes: resultados del Sistema de Consolidación Oficial de Resultados de Cómputo y coordenadas del sistema GeoElectoral del Órgano Electoral Plurinacional.</div>
 </div>
 
 <div id="mapa"></div>
 
 
 ```js
-const vueltas = ["primera", "segunda"];
 const vueltas_folder = {
   primera: "resultados/datos/",
   segunda: "resultados/datos/segunda_vuelta/",
 };
-const vueltaInput = Inputs.radio(vueltas, {
-  value: "segunda",
-  required: true,
-  format: (d) => `${d} vuelta`,
-});
-const vuelta = Generators.input(vueltaInput);
+const vuelta = "segunda";
 ```
 
 ```js
@@ -121,18 +107,8 @@ const vistas = {
 ```
 
 ```js
-// Seleccionar vistas
-const opciones = Object.keys(vistas);
-const etiquetas = {
-  validos: "votos válidos",
-  participacion: "votos nulos y blancos",
-};
-const vistaInput = Inputs.radio(opciones, {
-  value: "validos",
-  required: true,
-  format: (d) => etiquetas[d] ?? d,
-});
-const vista = Generators.input(vistaInput);
+// Seleccionar vista
+const vista = "validos";
 ```
 
 ```js
@@ -165,6 +141,10 @@ const recinto_colores = {
 const map = crearMapa("#mapa");
 invalidation.then(() => map.remove());
 const popup = new maplibregl.Popup({
+  closeButton: false,
+  closeOnClick: false,
+});
+const popupEscuela = new maplibregl.Popup({
   closeButton: false,
   closeOnClick: false,
 });
@@ -238,6 +218,52 @@ try {
     console.warn("No se pudo cargar unidades_educativas_frontera.json:", e2);
     fronteraEscuelas = null;
   }
+}
+
+// Cargar CSV de unidades educativas cercanas a la frontera
+let csvEscuelas = null;
+try {
+  const ghBase = `https://raw.githubusercontent.com/datosbolivia/elecciones2025/refs/heads/main/resultados/datos/`;
+  const response = await fetch(`${ghBase}UEducativas_cercanas_frontera_bolivia.csv`);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  const csvText = await response.text();
+  csvEscuelas = d3.csvParse(csvText);
+  if (csvEscuelas && csvEscuelas.length > 0) {
+    console.log(`✓ Cargado CSV desde GitHub: ${csvEscuelas.length} escuelas`);
+  } else {
+    throw new Error("CSV vacío o inválido");
+  }
+} catch (e) {
+  console.warn("Error cargando CSV desde GitHub, intentando archivo local:", e.message);
+  try {
+    const csvFile = FileAttachment("datos/UEducativas_cercanas_frontera_bolivia.csv");
+    const csvText = await csvFile.text();
+    csvEscuelas = d3.csvParse(csvText);
+    if (csvEscuelas && csvEscuelas.length > 0) {
+      console.log(`✓ Cargado CSV desde archivo local: ${csvEscuelas.length} escuelas`);
+    } else {
+      throw new Error("CSV vacío o inválido");
+    }
+  } catch (e2) {
+    console.warn("No se pudo cargar UEducativas_cercanas_frontera_bolivia.csv:", e2);
+    csvEscuelas = null;
+  }
+}
+
+// Crear lookup map del CSV por cod_ue_id (store both string and number keys for flexibility)
+const csvEscuelasMap = new Map();
+if (csvEscuelas) {
+  for (const row of csvEscuelas) {
+    const id = row.cod_ue_id;
+    // Store with both string and number keys to handle type mismatches
+    csvEscuelasMap.set(String(id), row);
+    if (!isNaN(Number(id))) {
+      csvEscuelasMap.set(Number(id), row);
+    }
+  }
+  console.log(`✓ CSV lookup map creado con ${csvEscuelasMap.size / 2} escuelas (string + number keys)`);
 }
 
 // Crear GeoJSON para unidades escolares (solo si los datos están disponibles)
@@ -382,10 +408,11 @@ await actualizarCapas(map, v.mapa.estilo, capas, capasConfig);
 
 ```js
 // Hidratar coordenadas de recintos con datos de resultados
-for (const feature of recintos.features) {
-  // Código de recinto
-  const codigo = feature.properties.c;
-  const resultado = resultados[codigo];
+if (recintos && resultados) {
+  for (const feature of recintos.features) {
+    // Código de recinto
+    const codigo = feature.properties.c;
+    const resultado = resultados[codigo];
   // Total de votos válidos
   feature.properties.validos = resultado
     ? Object.values(resultado.r).reduce((s, v) => s + v, 0)
@@ -396,11 +423,12 @@ for (const feature of recintos.features) {
     : 0;
   // Partido ganador
   feature.properties.partido = resultado?.g ?? null;
-  // Porcentaje de votos nulos + blancos / habilitados
-  feature.properties.invalido = resultado?.p
-    ? (resultado.p.b + resultado.p.n) /
-      (resultado.p.b + resultado.p.n + resultado.p.v)
-    : null;
+    // Porcentaje de votos nulos + blancos / habilitados
+    feature.properties.invalido = resultado?.p
+      ? (resultado.p.b + resultado.p.n) /
+        (resultado.p.b + resultado.p.n + resultado.p.v)
+      : null;
+  }
 }
 ```
 
@@ -414,6 +442,8 @@ const mouseenter = function (e) {
   const feature = e.features[0];
   const resultado = resultados[feature.properties.c] ?? null;
   if (!resultado) return;
+  // Close escuela popup if it's open (recintos take priority)
+  if (!lockedEscuela) popupEscuela.remove();
   const grafico = plotResultado(resultado[v.datos.campo_resultado]);
   popup
     .setHTML(
@@ -446,29 +476,54 @@ map.on("click", (e) => {
 });
 
 // Popups para escuelas
-const popupEscuela = new maplibregl.Popup({
-  closeButton: false,
-  closeOnClick: false,
-});
-
 let lockedEscuela = false;
 
 const mouseenterEscuela = function (e) {
   map.getCanvas().style.cursor = "pointer";
   const feature = e.features[0];
   const props = feature.properties;
-  const schoolData = props.data || props.frontera_data;
+  const cod_ue_id = String(props.cod_ue_id || "");
   
-  if (!schoolData) return;
+  // Get data from CSV first, fallback to other sources
+  // Try both string and number lookup
+  const csvData = csvEscuelasMap.get(cod_ue_id) || csvEscuelasMap.get(Number(cod_ue_id));
+  const schoolData = csvData || props.data || props.frontera_data;
+  
+  // Close recinto popup if it's open (but don't block escuela popup)
+  if (!locked) popup.remove();
   
   let html = `<div class="popup_plot">`;
-  html += `<div class="popup_header">${props.name || schoolData.desc_ue || ""}</div>`;
+  
+  // Get title from CSV or fallback
+  const title = csvData ? csvData.desc_ue : (props.name || schoolData?.desc_ue || schoolData?.name || cod_ue_id || "Escuela");
+  html += `<div class="popup_header">${title}</div>`;
   html += `<div style="padding: 10px; font-family: Inter; font-size: 0.9em; color: var(--texto_fuerte);">`;
   
-  if (props.data) {
-    // Mostrar información de data.json
-    html += `<div style="margin-bottom: 8px;"><strong>Código:</strong> ${schoolData.cod_ue_id || ""}</div>`;
-    html += `<div style="margin-bottom: 8px;"><strong>Departamento:</strong> ${schoolData.desc_departamento || ""}</div>`;
+  // Mostrar información del CSV - mostrar todos los campos
+  if (csvData) {
+    html += `<div style="margin-bottom: 8px;"><strong>Código:</strong> ${csvData.cod_ue_id || ""}</div>`;
+    html += `<div style="margin-bottom: 8px;"><strong>Nombre:</strong> ${csvData.desc_ue || ""}</div>`;
+    html += `<div style="margin-bottom: 8px;"><strong>Distrito:</strong> ${csvData.distrito || ""}</div>`;
+    html += `<div style="margin-bottom: 8px;"><strong>Área:</strong> ${csvData.area || ""}</div>`;
+    html += `<div style="margin-bottom: 8px;"><strong>Departamento:</strong> ${csvData.desc_departamento || ""}</div>`;
+    html += `<div style="margin-bottom: 8px;"><strong>Estado:</strong> ${csvData.estadoinstitucion || ""}</div>`;
+    if (csvData.latitud) {
+      html += `<div style="margin-bottom: 8px;"><strong>Latitud:</strong> ${csvData.latitud}</div>`;
+    }
+    if (csvData.longitud) {
+      html += `<div style="margin-bottom: 8px;"><strong>Longitud:</strong> ${csvData.longitud}</div>`;
+    }
+  } else if (schoolData) {
+    // Fallback: mostrar información disponible
+    if (schoolData.cod_ue_id) {
+      html += `<div style="margin-bottom: 8px;"><strong>Código:</strong> ${schoolData.cod_ue_id}</div>`;
+    }
+    if (schoolData.desc_ue || schoolData.name) {
+      html += `<div style="margin-bottom: 8px;"><strong>Nombre:</strong> ${schoolData.desc_ue || schoolData.name}</div>`;
+    }
+    if (schoolData.desc_departamento || schoolData.departamento) {
+      html += `<div style="margin-bottom: 8px;"><strong>Departamento:</strong> ${schoolData.desc_departamento || schoolData.departamento}</div>`;
+    }
     if (schoolData.distrito) {
       html += `<div style="margin-bottom: 8px;"><strong>Distrito:</strong> ${schoolData.distrito}</div>`;
     }
@@ -478,15 +533,12 @@ const mouseenterEscuela = function (e) {
     if (schoolData.estadoinstitucion) {
       html += `<div style="margin-bottom: 8px;"><strong>Estado:</strong> ${schoolData.estadoinstitucion}</div>`;
     }
-  } else if (props.frontera_data) {
-    // Mostrar información básica de frontera
-    html += `<div style="margin-bottom: 8px;"><strong>Código:</strong> ${schoolData.cod_ue_id || ""}</div>`;
-    if (schoolData.departamento) {
-      html += `<div style="margin-bottom: 8px;"><strong>Departamento:</strong> ${schoolData.departamento}</div>`;
+  } else {
+    // Show at least the cod_ue_id if we have it
+    if (cod_ue_id) {
+      html += `<div style="margin-bottom: 8px;"><strong>Código:</strong> ${cod_ue_id}</div>`;
     }
-    if (schoolData.area) {
-      html += `<div style="margin-bottom: 8px;"><strong>Área:</strong> ${schoolData.area}</div>`;
-    }
+    html += `<div style="margin-bottom: 8px;">Información no disponible</div>`;
   }
   
   html += `</div></div>`;
