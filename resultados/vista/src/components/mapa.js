@@ -10,7 +10,7 @@ export const crearMapa = (selector) => {
     attributionControl: {
       compact: true,
       customAttribution:
-        "<a href='https://mauforonda.github.io/'>Mauricio Foronda</a>",
+        "<a href='https://asesortecnologiaminedu-cyber.github.io/'>Software Libre</a>",
     },
   });
 
